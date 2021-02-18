@@ -11,11 +11,17 @@ const DEFModC = 1500;
 const DEXModA = 1800;
 const DEXModB = 1500;
 const DEXModC = 1000;
-const mods = {
-    'strength': [STRModA, STRModB, STRModC],
-    'speed': [SPDModA, SPDModB, SPDModC],
-    'defense': [DEFModA, DEFModB, DEFModC],
-    'dexterity': [DEXModA, DEXModB, DEXModC],
+const StatName = {
+  STR: 'strength',
+  SPD: 'speed',
+  DEF: 'defense',
+  DEX: 'dexterity',
+}
+const Mods = {
+  [StatName.STR]: [STRModA, STRModB, STRModC],
+  [StatName.SPD]: [SPDModA, SPDModB, SPDModC],
+  [StatName.DEF]: [DEFModA, DEFModB, DEFModC],
+  [StatName.DEX]: [DEXModA, DEXModB, DEXModC],
 };
 
 const MaxHappy = 99999;
@@ -28,11 +34,11 @@ function excelRound(number, dots) {
 }
 
 function train(energy, stat, happy, gym, perks, attributeName) {
-    if (typeof attributeName === 'undefined' || !Object.keys(mods).includes(attributeName)) {
+    if (typeof attributeName === 'undefined' || !Object.keys(Mods).includes(attributeName)) {
         console.error('invalid attributeName')
         return -1;
     }
-    var [modA, modB, modC] = mods[attributeName];
+    var [modA, modB, modC] = Mods[attributeName];
     var capedStat = stat > 50000000 ? 50000000 : stat;
     var gain = (capedStat * excelRound(1 + 0.07 * excelRound(Math.log(1 + happy / 250), 4), 4) + 8 * Math.pow(happy, 1.05) + (1 - Math.pow((happy / 99999), 2)) * modA + modB) * (1 / 200000) * gym * energy * perks;
     var upperGain = (capedStat * excelRound(1 + 0.07 * excelRound(Math.log(1 + happy / 250), 4), 4) + 8 * Math.pow(happy, 1.05) + (1 - Math.pow((happy / 99999), 2)) * modA + modB + modC) * (1 / 200000) * gym * energy * perks;
@@ -84,10 +90,21 @@ function bookGains(energyPerTrain, stat, gym, perks, attributeName, days) {
     console.log(`efficiency: ${(efficiency * 100).toFixed(2)}%`);
 }
 
+function thunkWorkout(statName, gymFactor, energyPerTrain, happy, perks, energy) {
+  return (stats) => {
+    let finalStat = doTrains(energy, energyPerTrain, Number(stats[statName]), happy, gymFactor, perks, statName);
+    let result = Object.assign({}, stats);
+    result[statName] = finalStat.toFixed(2);
+    return result;
+  };
+}
+
 module.exports = {
   excelRound,
   doTrains,
   doTrains2,
+  thunkWorkout,
+  StatName,
 };
 
 // 方案1：解锁george的同时满足比例
